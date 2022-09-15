@@ -23,8 +23,16 @@ export class FrontendGenerator extends AbstractGenerator {
 
     async generate(options: GeneratorOptions = {}): Promise<void> {
         const frontendModules = this.pck.targetFrontendModules;
-        await this.write(this.pck.frontend('index.html'), this.compileIndexHtml(frontendModules));
-        await this.write(this.pck.frontend('index.js'), this.compileIndexJs(frontendModules));
+        if (this.package.isHybrid()) {
+            await this.write(this.pck.frontend('browser', 'index.html'), this.compileIndexHtml(this.package.frontendModules));
+            await this.write(this.pck.frontend('electron', 'index.html'), this.compileIndexHtml(this.package.frontendElectronModules));
+            await this.write(this.pck.frontend('browser', 'index.js'), this.compileIndexJs(this.package.frontendModules));
+            await this.write(this.pck.frontend('electron', 'index.js'), this.compileIndexJs(this.package.frontendElectronModules));
+        } else {
+            await this.write(this.pck.frontend('index.html'), this.compileIndexHtml(frontendModules));
+            await this.write(this.pck.frontend('index.js'), this.compileIndexJs(frontendModules));
+        }
+
         if (this.pck.isElectron()) {
             const electronMainModules = this.pck.targetElectronMainModules;
             await this.write(this.pck.frontend('electron-main.js'), this.compileElectronMain(electronMainModules));

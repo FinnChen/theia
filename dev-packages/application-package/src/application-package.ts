@@ -16,11 +16,15 @@
 
 import * as paths from 'path';
 import { readJsonFile, writeJsonFile } from './json-file';
-import { NpmRegistry, NodePackage, PublishedNodePackage, sortByKey } from './npm-registry';
+import { NpmRegistry, NpmRegistryOptions, NodePackage, PublishedNodePackage, sortByKey } from './npm-registry';
 import { Extension, ExtensionPackage, ExtensionPackageOptions, RawExtensionPackage } from './extension-package';
 import { ExtensionPackageCollector } from './extension-package-collector';
 import { ApplicationProps } from './application-props';
 import deepmerge = require('deepmerge');
+
+export class ApplicationPackageConfig extends NpmRegistryOptions {
+    readonly target: ApplicationProps.Target;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ApplicationLog = (message?: any, ...optionalParams: any[]) => void;
@@ -222,6 +226,10 @@ export class ApplicationPackage {
         return this.target === ApplicationProps.ApplicationTarget.electron;
     }
 
+    isHybrid(): boolean {
+        return this.target === 'hybrid';
+    }
+
     ifBrowser<T>(value: T): T | undefined;
     ifBrowser<T>(value: T, defaultValue: T): T;
     ifBrowser<T>(value: T, defaultValue?: T): T | undefined {
@@ -234,8 +242,14 @@ export class ApplicationPackage {
         return this.isElectron() ? value : defaultValue;
     }
 
+    ifHybrid<T>(value: T): T | undefined;
+    ifHybrid<T>(value: T, defaultValue: T): T;
+    ifHybrid<T>(value: T, defaultValue?: T): T | undefined {
+        return this.isHybrid() ? value : defaultValue;
+    }
+
     get targetBackendModules(): Map<string, string> {
-        return this.ifBrowser(this.backendModules, this.backendElectronModules);
+        return this.ifBrowser(this.backendModules, this.backendModules);
     }
 
     get targetFrontendModules(): Map<string, string> {

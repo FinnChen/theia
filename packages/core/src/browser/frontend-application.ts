@@ -355,10 +355,17 @@ export class FrontendApplication {
      */
     protected async startContributions(): Promise<void> {
         for (const contribution of this.contributions.getContributions()) {
+            console.log(`will initialize contribution: ${contribution.constructor.name}`);
+            if (contribution.constructor.name === 'Object') {
+                console.log('break here');
+            }
             if (contribution.initialize) {
                 try {
                     await this.measure(contribution.constructor.name + '.initialize',
-                        () => contribution.initialize!()
+                        () => {
+                            console.log(`initialize ${contribution.constructor.name}`);
+                            contribution.initialize!();
+                        }
                     );
                 } catch (error) {
                     console.error('Could not initialize contribution', error);
@@ -395,8 +402,12 @@ export class FrontendApplication {
         for (const contribution of this.contributions.getContributions()) {
             if (contribution.onStart) {
                 try {
+                    console.log(`will start contribution: ${contribution.constructor.name}`);
                     await this.measure(contribution.constructor.name + '.onStart',
-                        () => contribution.onStart!(this)
+                        () => {
+                            contribution.onStart!(this);
+                            console.log(`did start contribution: ${contribution.constructor.name}`);
+                        }
                     );
                 } catch (error) {
                     console.error('Could not start contribution', error);

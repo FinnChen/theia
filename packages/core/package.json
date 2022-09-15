@@ -35,6 +35,7 @@
     "@types/yargs": "^15",
     "@vscode/codicons": "*",
     "ajv": "^6.5.3",
+    "axios": "^0.27.2",
     "body-parser": "^1.17.2",
     "cookie": "^0.4.0",
     "dompurify": "^2.2.9",
@@ -161,6 +162,10 @@
     {
       "backend": "lib/node/request/backend-request-module",
       "backendElectron": "lib/electron-node/request/electron-backend-request-module"
+    },
+    {
+      "frontendElectron": "lib/electron-browser/remote/electron-remote-module",
+      "backendElectron": "lib/electron-node/remote/electron-remote-module"
     }
   ],
   "keywords": [

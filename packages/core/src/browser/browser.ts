@@ -35,6 +35,11 @@ export const isNative = typeof (window as any).process !== 'undefined';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isBasicWasmSupported = typeof (window as any).WebAssembly !== 'undefined';
 
+// Current protocol in use to display the application
+export const isHttps = /^https:/.test(self.location.href);
+export const isHttp = /^http:/.test(self.location.href);
+export const isFile = /^file:/.test(self.location.href);
+
 /**
  * Resolves after the next animation frame if no parameter is given,
  * or after the given number of animation frames.

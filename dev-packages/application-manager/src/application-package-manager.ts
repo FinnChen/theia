@@ -106,7 +106,12 @@ export class ApplicationPackageManager {
 
     async copy(): Promise<void> {
         await fs.ensureDir(this.pck.lib());
-        await fs.copy(this.pck.frontend('index.html'), this.pck.lib('index.html'));
+        if (this.pck.isHybrid()) {
+            await fs.copy(this.pck.frontend('electron', 'index.html'), this.pck.lib('electron', 'index.html'));
+            await fs.copy(this.pck.frontend('browser', 'index.html'), this.pck.lib('browser', 'index.html'));
+        } else {
+            await fs.copy(this.pck.frontend('index.html'), this.pck.lib('index.html'));
+        }
     }
 
     async build(args: string[] = [], options: GeneratorOptions = {}): Promise<void> {
@@ -118,8 +123,12 @@ export class ApplicationPackageManager {
     start(args: string[] = []): cp.ChildProcess {
         if (this.pck.isElectron()) {
             return this.startElectron(args);
+        } else if (this.pck.isBrowser()) {
+            return this.startBrowser(args);
+        } else if (this.pck.isHybrid()) {
+            return this.startHybrid(args);
         }
-        return this.startBrowser(args);
+        throw new Error(`Unknown target: '${this.pck.target}'`);
     }
 
     startElectron(args: string[]): cp.ChildProcess {
@@ -148,6 +157,10 @@ export class ApplicationPackageManager {
         // See https://nodejs.org/api/child_process.html#child_process_options_detached
         options.detached = process.platform !== 'win32';
         return this.__process.fork(this.pck.backend('main.js'), mainArgs, options);
+    }
+
+    startHybrid(args: string[]): cp.ChildProcess {
+        return this.startBrowser(args);
     }
 
     /**

@@ -37,7 +37,8 @@
         "--plugins=local-dir:../../plugins"
       ],
       "env": {
-        "NODE_ENV": "development"
+        "NODE_ENV": "development",
+        "THEIA_ELECTRON_TOKEN": "{ \"value\": \"token1234\" }"
       },
       "sourceMaps": true,
       "outFiles": [
@@ -151,7 +152,41 @@
       "request": "attach",
       "name": "Attach to Electron Frontend",
       "port": 9222,
-      "webRoot": "${workspaceFolder}/examples/electron"
+      "webRoot": "${workspaceFolder}/examples/hybrid"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch hybrid Backend",
+      "program": "${workspaceFolder}/examples/hybrid/src-gen/backend/main.js",
+      "args": [
+        "--hostname=0.0.0.0",
+        "--port=3000",
+        "--app-project-path=${workspaceFolder}/examples/hybrid",
+        "--plugins=local-dir:plugins",
+        "--hosted-plugin-inspect=9339"
+      ],
+      "env": {
+        "NODE_ENV": "development",
+        "THEIA_ELECTRON_TOKEN": "{ \"value\": \"token1234\" }"
+      },
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/examples/hybrid/src-gen/backend/*.js",
+        "${workspaceFolder}/examples/hybrid/lib/**/*.js",
+        "${workspaceFolder}/packages/*/lib/**/*.js",
+        "${workspaceFolder}/dev-packages/*/lib/**/*.js"
+      ],
+      "smartStep": true,
+      "internalConsoleOptions": "openOnSessionStart",
+      "outputCapture": "std"
+    },
+    {
+      "name": "Launch Hybrid Browser Frontend",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000/",
+      "webRoot": "${workspaceFolder}/examples/hybrid"
     },
     {
       "name": "Launch VS Code Tests",

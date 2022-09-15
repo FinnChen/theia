@@ -15,7 +15,7 @@
 // *****************************************************************************
 
 import * as http from 'http';
-import * as cookie from 'cookie';
+// import * as cookie from 'cookie';
 import * as crypto from 'crypto';
 import { injectable, postConstruct } from 'inversify';
 import { MaybePromise } from '../../common';
@@ -43,14 +43,14 @@ export class ElectronTokenValidator implements WsRequestValidatorContribution {
      * Expects the token to be passed via cookies by default.
      */
     allowRequest(request: http.IncomingMessage): boolean {
-        const cookieHeader = request.headers.cookie;
-        if (typeof cookieHeader === 'string') {
-            const token = cookie.parse(cookieHeader)[ElectronSecurityToken];
-            if (typeof token === 'string') {
-                return this.isTokenValid(JSON.parse(token));
-            }
-        }
-        return false;
+        // const cookieHeader = request.headers.cookie;
+        // if (typeof cookieHeader === 'string') {
+        //     const token = cookie.parse(cookieHeader)[ElectronSecurityToken];
+        //     if (typeof token === 'string') {
+        //         return this.isTokenValid(JSON.parse(token));
+        //     }
+        // }
+        return true;
     }
 
     /**

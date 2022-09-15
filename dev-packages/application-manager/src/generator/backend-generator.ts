@@ -24,6 +24,27 @@ export class BackendGenerator extends AbstractGenerator {
         await this.write(this.pck.backend('main.js'), this.compileMain(backendModules));
     }
 
+    protected compileExpressStatic(segment: string = ''): string {
+        return `express.static(path.join(__dirname, '../../lib${segment}'), {
+            index: 'index.html'
+        })`;
+    }
+
+    protected compileMiddleware(): string {
+        return this.pck.isHybrid() ? `
+        const electron = ${this.compileExpressStatic('/electron')};
+        const browser = ${this.compileExpressStatic('/browser')};
+        application.use((request, ...args) => {
+            const userAgent = request.headers['user-agent'] || 'unknown';
+            const isElectron = /electron/ig.test(userAgent);
+            request.url = request.baseUrl || request.url;
+            return (isElectron ? electron : browser)(request, ...args);
+        });
+` : `
+        application.use(${this.compileExpressStatic()});
+`;
+    }
+
     protected compileServer(backendModules: Map<string, string>): string {
         return `// @ts-check
 require('reflect-metadata');${this.ifElectron(`
@@ -51,8 +72,8 @@ container.load(backendApplicationModule);
 container.load(messagingBackendModule);
 container.load(loggerBackendModule);
 
-function defaultServeStatic(app) {
-    app.use(express.static(path.resolve(__dirname, '../../lib')))
+function defaultServeStatic(application) {
+
 }
 
 function load(raw) {
@@ -66,7 +87,9 @@ function start(port, host, argv = process.argv) {
         container.bind(BackendApplicationServer).toConstantValue({ configure: defaultServeStatic });
     }
     return container.get(CliManager).initializeCli(argv).then(() => {
-        return container.get(BackendApplication).start(port, host);
+        const application = container.get(BackendApplication);
+        ${this.compileMiddleware()}
+        return application.start(port, host);
     });
 }
 

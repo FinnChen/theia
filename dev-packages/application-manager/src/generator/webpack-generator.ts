@@ -17,6 +17,7 @@
 import * as paths from 'path';
 import * as fs from 'fs-extra';
 import { AbstractGenerator } from './abstract-generator';
+import { ApplicationProps } from '@theia/application-package';
 
 export class WebpackGenerator extends AbstractGenerator {
 
@@ -45,6 +46,17 @@ export class WebpackGenerator extends AbstractGenerator {
 
     protected resolve(moduleName: string, path: string): string {
         return this.pck.resolveModulePath(moduleName, path).split(paths.sep).join('/');
+    }
+
+    protected compileExports(): string {
+        const exports = [];
+        if (this.package.isHybrid() || this.package.isBrowser()) {
+            exports.push(this.normalized('browser'));
+        }
+        if (this.package.isHybrid() || this.package.isElectron()) {
+            exports.push(this.normalized('electron'));
+        }
+        return `[${exports.join(', ')}]`;
     }
 
     protected compileWebpackConfig(): string {
@@ -85,22 +97,31 @@ plugins.push(new CircularDependencyPlugin({
     exclude: /(node_modules|examples)[\\\\|\/]./,
     failOnError: false // https://github.com/nodejs/readable-stream/issues/280#issuecomment-297076462
 }));
+${this.package.isHybrid() || this.package.isBrowser() ? this.compileWebpackConfigObjectFor('browser') : ''}\
+${this.package.isHybrid() || this.package.isElectron() ? this.compileWebpackConfigObjectFor('electron') : ''}\
 
-module.exports = {
+module.exports = ${this.compileExports()};
+`;
+    }
+
+    protected compileWebpackConfigObjectFor(target: ApplicationProps.Target): string {
+        const normalizedTarget = this.normalized(target);
+        return `\
+const ${normalizedTarget} = {
     mode,
     plugins,
     devtool: 'source-map',
     entry: {
-        bundle: path.resolve(__dirname, 'src-gen/frontend/index.js'),
+        bundle: path.resolve(__dirname, 'src-gen/frontend/${this.ifHybrid(normalizedTarget + '/')}index.js'),
         ${this.ifMonaco(() => "'editor.worker': '@theia/monaco-editor-core/esm/vs/editor/editor.worker.js'")}
     },
     output: {
         filename: '[name].js',
-        path: outputPath,
+        path: path.resolve(outputPath, '${this.ifHybrid(normalizedTarget)}'),
         devtoolModuleFilenameTemplate: 'webpack:///[resource-path]?[loaders]',
         globalObject: 'self'
     },
-    target: '${this.ifBrowser('web', 'electron-renderer')}',
+    target: '${target === 'browser' ? 'web' : 'electron-renderer'}',
     cache: staticCompression,
     module: {
         rules: [
@@ -189,6 +210,7 @@ module.exports = {
         fallback: {
             'child_process': false,
             'crypto': false,
+            'fs': false,
             'net': false,
             'path': require.resolve('path-browserify'),
             'process': false,
@@ -201,7 +223,8 @@ module.exports = {
         warnings: true,
         children: true
     }
-};`;
+};
+`;
     }
 
     protected compileUserWebpackConfig(): string {
@@ -210,7 +233,7 @@ module.exports = {
  * To reset delete this file and rerun theia build again.
  */
 // @ts-check
-const config = require('./${paths.basename(this.genConfigPath)}');
+const configs = require('./${paths.basename(this.genConfigPath)}');
 
 /**
  * Expose bundled modules on window.theia.moduleName namespace, e.g.
